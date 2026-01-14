@@ -1,0 +1,18 @@
+# Virtual env
+myvenv/
+venv/
+
+# Python
+__pycache__/
+*.pyc
+
+# Django
+db.sqlite3
+
+# Secrets
+.env
+
+# Mac/editor
+.DS_Store
+.vscode/
+
