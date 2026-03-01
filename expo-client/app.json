@@ -4,7 +4,7 @@
     "slug": "expo-client",
     "version": "1.0.0",
     "scheme": "expo-client",
-    "platforms": ["ios", "android"],
+    "platforms": ["ios", "android", "web"],
     "web": {
       "bundler": "metro",
       "output": "static",
