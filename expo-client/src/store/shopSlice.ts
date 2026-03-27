@@ -1,62 +1,76 @@
-import { createSlice, PayloadAction } from "@reduxjs/toolkit";
+import { createAsyncThunk, createSlice, PayloadAction } from "@reduxjs/toolkit";
+export const API_BASE_URL = "http://127.0.0.1:8000/api";
 
 export type Game = {
-  id: string;
+  id: number;
   title: string;
-  price: number;
+  price: string;
   players: string;
-  minutes: string;
-};
-
-export type CartItem = {
-  gameId: string;
-  qty: number;
+  play_time: string;
+  description: string;
 };
 
 type ShopState = {
   games: Game[];
-  cart: CartItem[];
+  loading: boolean;
+  error: string | null;
 };
 
 const initialState: ShopState = {
-  games: [
-    { id: "catan", title: "Catan", price: 44.99, players: "3–4", minutes: "60–120" },
-    { id: "azul", title: "Azul", price: 39.99, players: "2–4", minutes: "30–45" },
-    { id: "wingspan", title: "Wingspan", price: 59.99, players: "1–5", minutes: "40–70" },
-    { id: "splendor", title: "Splendor", price: 34.99, players: "2–4", minutes: "30" },
-  ],
-  cart: [],
+  games: [],
+  loading: false,
+  error: null,
 };
 
-function findCartIndex(cart: CartItem[], gameId: string) {
-  return cart.findIndex((c) => c.gameId === gameId);
-}
+export const fetchGames = createAsyncThunk("shop/fetchGames", async () => {
+  const response = await fetch(`${API_BASE_URL}/games/`);
+  if (!response.ok) {
+    throw new Error("Failed to fetch games");
+  }
+  return (await response.json()) as Game[];
+});
+
+export const createGame = createAsyncThunk(
+  "shop/createGame",
+  async (newGame: Omit<Game, "id">) => {
+    const response = await fetch(`${API_BASE_URL}/games/`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(newGame),
+    });
+
+    if (!response.ok) {
+      throw new Error("Failed to create game");
+    }
+
+    return (await response.json()) as Game;
+  }
+);
 
 const shopSlice = createSlice({
   name: "shop",
   initialState,
-  reducers: {
-    addToCart: (state, action: PayloadAction<{ gameId: string }>) => {
-      const idx = findCartIndex(state.cart, action.payload.gameId);
-      if (idx >= 0) state.cart[idx].qty += 1;
-      else state.cart.push({ gameId: action.payload.gameId, qty: 1 });
-    },
-    decrementFromCart: (state, action: PayloadAction<{ gameId: string }>) => {
-      const idx = findCartIndex(state.cart, action.payload.gameId);
-      if (idx < 0) return;
-      state.cart[idx].qty -= 1;
-      if (state.cart[idx].qty <= 0) state.cart.splice(idx, 1);
-    },
-    removeFromCart: (state, action: PayloadAction<{ gameId: string }>) => {
-      state.cart = state.cart.filter((c) => c.gameId !== action.payload.gameId);
-    },
-    clearCart: (state) => {
-      state.cart = [];
-    },
+  reducers: {},
+  extraReducers: (builder) => {
+    builder
+      .addCase(fetchGames.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(fetchGames.fulfilled, (state, action: PayloadAction<Game[]>) => {
+        state.loading = false;
+        state.games = action.payload;
+      })
+      .addCase(fetchGames.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.error.message || "Something went wrong";
+      })
+      .addCase(createGame.fulfilled, (state, action: PayloadAction<Game>) => {
+        state.games.push(action.payload);
+      });
   },
 });
-
-export const { addToCart, decrementFromCart, removeFromCart, clearCart } =
-  shopSlice.actions;
 
 export default shopSlice.reducer;

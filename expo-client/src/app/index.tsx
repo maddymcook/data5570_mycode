@@ -1,21 +1,21 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { View, Text, TextInput, FlatList, Pressable } from "react-native";
 import { useDispatch, useSelector } from "react-redux";
-import { router, type Href } from "expo-router";
+import { router } from "expo-router";
 
 import type { RootState, AppDispatch } from "../store/store";
-import { addToCart } from "../store/shopSlice";
+import { fetchGames } from "../store/shopSlice";
 import { GameCard } from "../components/nativewindui/GameCard";
 
 export default function Home() {
   const dispatch = useDispatch<AppDispatch>();
-  const games = useSelector((s: RootState) => s.shop.games);
-  const cartCount = useSelector((s: RootState) =>
-    s.shop.cart.reduce((sum, c) => sum + c.qty, 0)
-  );
+  const { games, loading, error } = useSelector((s: RootState) => s.shop);
 
-  // Hook requirement
   const [query, setQuery] = useState("");
+
+  useEffect(() => {
+    dispatch(fetchGames());
+  }, [dispatch]);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -24,15 +24,37 @@ export default function Home() {
   }, [query, games]);
 
   return (
-    <View style={{ padding: 16, gap: 12 }}>
-      <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
-        <Text style={{ fontSize: 22, fontWeight: "800" }}>Games</Text>
+    <View
+      style={{
+        flex: 1,
+        backgroundColor: "#E0E7FF",
+        padding: 16,
+        gap: 12,
+      }}
+    >
+      <View
+        style={{
+          flexDirection: "row",
+          justifyContent: "space-between",
+          alignItems: "center",
+        }}
+      >
+        <Text style={{ fontSize: 28, fontWeight: "800", color: "#111827" }}>
+          🎲 Board Game Shop
+        </Text>
 
         <Pressable
-          onPress={() => router.push("../cart")}
-          style={{ paddingHorizontal: 12, paddingVertical: 8, borderWidth: 1, borderRadius: 8 }}
+          onPress={() => router.push("/add-game")}
+          style={{
+            paddingHorizontal: 14,
+            paddingVertical: 10,
+            backgroundColor: "#6366F1",
+            borderRadius: 10,
+          }}
         >
-          <Text>Cart ({cartCount})</Text>
+          <Text style={{ color: "white", fontWeight: "600" }}>
+            + Add Game
+          </Text>
         </Pressable>
       </View>
 
@@ -40,22 +62,42 @@ export default function Home() {
         value={query}
         onChangeText={setQuery}
         placeholder="Search games..."
-        style={{ borderWidth: 1, padding: 10, borderRadius: 8 }}
+        placeholderTextColor="#9CA3AF"
+        style={{
+          borderWidth: 1,
+          borderColor: "#E0E7FF",
+          padding: 12,
+          borderRadius: 10,
+          backgroundColor: "white",
+        }}
       />
+
+      {loading && <Text style={{ color: "#6B7280" }}>Loading...</Text>}
+      {error && <Text style={{ color: "crimson" }}>{error}</Text>}
+
+      {!loading && filtered.length === 0 && (
+        <Text style={{ textAlign: "center", marginTop: 20, color: "#6B7280" }}>
+          No games found 🎲
+        </Text>
+      )}
 
       <FlatList
         data={filtered}
-        keyExtractor={(g) => g.id}
+        keyExtractor={(g) => String(g.id)}
+        contentContainerStyle={{ paddingBottom: 40 }}
         renderItem={({ item }) => (
           <GameCard
             game={item}
-            onView={() => router.push(`/game/${item.id}` as Href)}
-            onAdd={() => dispatch(addToCart({ gameId: item.id }))}
+            onView={() =>
+              router.push({
+                pathname: "/game/[id]",
+                params: { id: String(item.id) },
+              })
+            }
+            onAdd={() => {}}
           />
         )}
-        ItemSeparatorComponent={() => (
-          <View style={{ height: 1, opacity: 0.15, backgroundColor: "#000" }} />
-        )}
+        ItemSeparatorComponent={() => <View style={{ height: 10 }} />}
       />
     </View>
   );

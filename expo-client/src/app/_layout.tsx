@@ -6,9 +6,10 @@ export default function RootLayout() {
   return (
     <Provider store={store}>
       <Stack>
-        <Stack.Screen name="index" options={{ title: "Board Game Shop" }} />
-        <Stack.Screen name="cart" options={{ title: "Your Cart" }} />
+      <Stack.Screen name="index" options={{ headerShown: false }} />       
+       <Stack.Screen name="cart" options={{ title: "Your Cart" }} />
         <Stack.Screen name="game/[id]" options={{ title: "Game Details" }} />
+        <Stack.Screen name="add-game" options={{ title: "Add Game" }} />
       </Stack>
     </Provider>
   );
