@@ -7,8 +7,11 @@ import { addToCart } from "../../store/shopSlice";
 export default function GameDetails() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const dispatch = useDispatch<AppDispatch>();
+  const gameId = id != null ? Number(id) : NaN;
 
-  const game = useSelector((s: RootState) => s.shop.games.find((g) => g.id === id));
+  const game = useSelector((s: RootState) =>
+    Number.isFinite(gameId) ? s.shop.games.find((g) => g.id === gameId) : undefined
+  );
 
   if (!game) {
     return (
@@ -25,9 +28,11 @@ export default function GameDetails() {
     <View style={{ padding: 16, gap: 12 }}>
       <Text style={{ fontSize: 26, fontWeight: "900" }}>{game.title}</Text>
       <Text style={{ opacity: 0.75 }}>
-        Players: {game.players} • {game.minutes} mins
+        Players: {game.players} • {game.play_time}
       </Text>
-      <Text style={{ fontSize: 18, fontWeight: "800" }}>${game.price.toFixed(2)}</Text>
+      <Text style={{ fontSize: 18, fontWeight: "800" }}>
+        ${Number(game.price).toFixed(2)}
+      </Text>
 
       <Pressable
         onPress={() => dispatch(addToCart({ gameId: game.id }))}

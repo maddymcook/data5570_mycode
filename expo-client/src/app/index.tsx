@@ -4,7 +4,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { router } from "expo-router";
 
 import type { RootState, AppDispatch } from "../store/store";
-import { fetchGames } from "../store/shopSlice";
+import { fetchGames, addToCart, deleteGame } from "../store/shopSlice";
 import { GameCard } from "../components/nativewindui/GameCard";
 
 export default function Home() {
@@ -94,8 +94,9 @@ export default function Home() {
                 params: { id: String(item.id) },
               })
             }
-            onAdd={() => {}}
-          />
+            onAdd={() => dispatch(addToCart({ gameId: item.id }))}
+            onDelete={() => dispatch(deleteGame(item.id))}
+            />
         )}
         ItemSeparatorComponent={() => <View style={{ height: 10 }} />}
       />

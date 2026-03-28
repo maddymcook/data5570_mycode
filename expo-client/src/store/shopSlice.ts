@@ -1,5 +1,5 @@
-import { createAsyncThunk, createSlice, PayloadAction } from "@reduxjs/toolkit";
-export const API_BASE_URL = "http://127.0.0.1:8000/api";
+import { createAsyncThunk, createSlice, type PayloadAction } from "@reduxjs/toolkit";
+import { API_BASE_URL } from "../config";
 
 export type Game = {
   id: number;
@@ -10,16 +10,23 @@ export type Game = {
   description: string;
 };
 
+type CartItem = {
+  gameId: number;
+  qty: number;
+};
+
 type ShopState = {
   games: Game[];
   loading: boolean;
   error: string | null;
+  cart: CartItem[];
 };
 
 const initialState: ShopState = {
   games: [],
   loading: false,
   error: null,
+  cart: [],
 };
 
 export const fetchGames = createAsyncThunk("shop/fetchGames", async () => {
@@ -29,6 +36,21 @@ export const fetchGames = createAsyncThunk("shop/fetchGames", async () => {
   }
   return (await response.json()) as Game[];
 });
+
+export const deleteGame = createAsyncThunk(
+  "shop/deleteGame",
+  async (id: number) => {
+    const response = await fetch(`${API_BASE_URL}/games/${id}/`, {
+      method: "DELETE",
+    });
+
+    if (!response.ok) {
+      throw new Error("Failed to delete game");
+    }
+
+    return id;
+  }
+);
 
 export const createGame = createAsyncThunk(
   "shop/createGame",
@@ -52,7 +74,26 @@ export const createGame = createAsyncThunk(
 const shopSlice = createSlice({
   name: "shop",
   initialState,
-  reducers: {},
+  reducers: {
+    addToCart: (state, action: PayloadAction<{ gameId: number }>) => {
+      const { gameId } = action.payload;
+      const row = state.cart.find((c) => c.gameId === gameId);
+      if (row) row.qty += 1;
+      else state.cart.push({ gameId, qty: 1 });
+    },
+    decrementFromCart: (state, action: PayloadAction<{ gameId: number }>) => {
+      const { gameId } = action.payload;
+      const row = state.cart.find((c) => c.gameId === gameId);
+      if (!row) return;
+      row.qty -= 1;
+      if (row.qty <= 0) {
+        state.cart = state.cart.filter((c) => c.gameId !== gameId);
+      }
+    },
+    clearCart: (state) => {
+      state.cart = [];
+    },
+  },
   extraReducers: (builder) => {
     builder
       .addCase(fetchGames.pending, (state) => {
@@ -69,8 +110,14 @@ const shopSlice = createSlice({
       })
       .addCase(createGame.fulfilled, (state, action: PayloadAction<Game>) => {
         state.games.push(action.payload);
+      })
+      .addCase(deleteGame.fulfilled, (state, action: PayloadAction<number>) => {
+        const id = action.payload;
+        state.games = state.games.filter((g) => g.id !== id);
+        state.cart = state.cart.filter((c) => c.gameId !== id);
       });
   },
 });
 
+export const { addToCart, decrementFromCart, clearCart } = shopSlice.actions;
 export default shopSlice.reducer;

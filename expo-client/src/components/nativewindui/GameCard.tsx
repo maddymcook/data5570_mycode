@@ -6,9 +6,10 @@ type GameCardProps = {
   game: Game;
   onView: () => void;
   onAdd: () => void;
+  onDelete: () => void;
 };
 
-export function GameCard({ game, onView, onAdd }: GameCardProps) {
+export function GameCard({ game, onView, onAdd, onDelete }: GameCardProps) {
   return (
     <View
       style={{
@@ -40,7 +41,7 @@ export function GameCard({ game, onView, onAdd }: GameCardProps) {
         ${Number(game.price).toFixed(2)}
       </Text>
 
-      <View style={{ flexDirection: "row", marginTop: 10, gap: 10 }}>
+      <View style={{ flexDirection: "row", marginTop: 10, gap: 10, flexWrap: "wrap" }}>
         <Pressable
           onPress={onView}
           style={{
@@ -62,6 +63,19 @@ export function GameCard({ game, onView, onAdd }: GameCardProps) {
           }}
         >
           <Text>Add</Text>
+        </Pressable>
+
+        <Pressable
+          onPress={onDelete}
+          style={{
+            padding: 8,
+            borderWidth: 1,
+            borderColor: "#FECACA",
+            backgroundColor: "#FEF2F2",
+            borderRadius: 8,
+          }}
+        >
+          <Text style={{ color: "#B91C1C" }}>Delete</Text>
         </Pressable>
       </View>
     </View>
